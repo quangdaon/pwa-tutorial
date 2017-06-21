@@ -1,11 +1,11 @@
 // Copyright 2016 Google Inc.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //      http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -168,9 +168,9 @@
 			statement;
 
 		// Update data from cache
-		if('caches' in window) {
-			caches.match(url).then(function(response) {
-				if(response) {
+		if ('caches' in window) {
+			caches.match(url).then(function (response) {
+				if (response) {
 					response.json().then(function updateFromCache(json) {
 						var results = json.query.results;
 						results.key = key;
@@ -345,10 +345,132 @@
 
 	// TODO add service worker code here
 
-	//if ('serviceWorker' in navigator) {
-	//	navigator.serviceWorker
-	//		.register('./service-worker.js')
-	//		.then(function() { console.log('Service Worker Registered'); });
-	//}
+	if ('serviceWorker' in navigator) {
+		navigator.serviceWorker
+			.register('./service-worker.js').then(function (swReg) {
+			console.log('Service Worker is registered', swReg);
+
+			swRegistration = swReg;
+			initialiseUI();
+		})
+			.catch(function (error) {
+				console.error('Service Worker Error', error);
+			});
+	}
+
+	function urlB64ToUint8Array(base64String) {
+		const padding = '='.repeat((4 - base64String.length % 4) % 4);
+		const base64 = (base64String + padding)
+			.replace(/\-/g, '+')
+			.replace(/_/g, '/');
+
+		const rawData = window.atob(base64);
+		const outputArray = new Uint8Array(rawData.length);
+
+		for (let i = 0; i < rawData.length; ++i) {
+			outputArray[i] = rawData.charCodeAt(i);
+		}
+		return outputArray;
+	}
+
+	// Push notifications code
+	let isSubscribed = false;
+	let swRegistration = null;
+
+	const pushButton = document.getElementById('butPush');
+	const applicationServerPublicKey = 'BNH6ooOw3dbPhle7JbPtKfMaBY5rqyB2-sP326pfDoJe8Y4ihNSWrpJP0x3LhyDq5DW7FZWB38kLc16-RCpTaAA';
+
+	function initialiseUI() {
+		pushButton.addEventListener('click', function () {
+			pushButton.disabled = true;
+			if (isSubscribed) {
+				// TODO Unsub User
+				unsubscribeUser();
+			} else {
+				subscribeUser();
+			}
+		});
+
+		// Set the initial subscription value
+		swRegistration.pushManager.getSubscription()
+			.then(function (subscription) {
+				isSubscribed = !(subscription === null);
+
+				if (isSubscribed) {
+					console.log('User IS subscribed.');
+				} else {
+					console.log('User is NOT subscribed.');
+				}
+
+				updateBtn();
+			});
+	}
+
+	function updateBtn() {
+		if (Notification.permission === 'denied') {
+			pushButton.textContent = 'Push Messaging Blocked.';
+			pushButton.disabled = true;
+			updateSubscriptionOnServer(null);
+			return;
+		}
+
+		if (isSubscribed) {
+			pushButton.textContent = 'Disable Push Messaging';
+		} else {
+			pushButton.textContent = 'Enable Push Messaging';
+		}
+
+		pushButton.disabled = false;
+	}
+
+	function subscribeUser() {
+		var applicationServerKey = urlB64ToUint8Array(applicationServerPublicKey);
+		console.log(applicationServerKey);
+		swRegistration.pushManager.subscribe({
+			userVisibleOnly: true,
+			applicationServerKey: applicationServerKey
+		})
+			.then(function (subscription) {
+				console.log('User is subscribed.');
+
+				updateSubscriptionOnServer(subscription);
+
+				isSubscribed = true;
+
+				updateBtn();
+			})
+			.catch(function (err) {
+				console.log('Failed to subscribe the user: ', err);
+				updateBtn();
+			});
+	}
+
+	function unsubscribeUser() {
+		swRegistration.pushManager.getSubscription()
+			.then(function(subscription) {
+				if (subscription) {
+					return subscription.unsubscribe();
+				}
+			})
+			.catch(function(error) {
+				console.log('Error unsubscribing', error);
+			})
+			.then(function() {
+				updateSubscriptionOnServer(null);
+
+				console.log('User is unsubscribed.');
+				isSubscribed = false;
+
+				updateBtn();
+			});
+	}
+
+	function updateSubscriptionOnServer(subscription) {
+		// TODO: Send subscription to application server
+
+		var ta = document.getElementById('subscriptionData');
+
+		ta.textContent = JSON.stringify(subscription);
+	}
 
 })();

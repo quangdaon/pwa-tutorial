@@ -2,8 +2,10 @@
  * Created by QuangdaoN on 5/31/2017.
  */
 
+// Caching
+
 var dataCacheName = 'weatherData-v1';
-var cacheName = 'weatherPWA-step-7-1';
+var cacheName = 'weatherPWA-step-06011043';
 var filesToCache = [
 	'/',
 	'/index.html',
@@ -69,4 +71,30 @@ self.addEventListener('fetch', function(e) {
 			})
 		)
 	}
+});
+
+// Push Notifications
+
+self.addEventListener('push', function(event) {
+	console.log('[Service Worker] Push Received.');
+	console.log(`[Service Worker] Push had this data: "${event.data.text()}"`);
+
+	const title = 'Weather PWA';
+	const options = {
+		body: event.data.text(),
+		icon: 'images/icons/icon-192x192.png',
+		badge: 'images/icons/icon-192x192.png'
+	};
+
+	event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', function(event) {
+	console.log('[Service Worker] Notification click Received.');
+
+	event.notification.close();
+
+	event.waitUntil(
+		clients.openWindow('https://developers.google.com/web/')
+	);
 });

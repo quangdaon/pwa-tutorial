@@ -24,8 +24,18 @@
 		<title>Weather PWA</title>
 		<link rel="stylesheet" type="text/css" href="styles/inline.css">
 		
-		<!-- TODO add manifest here -->
-	
+		<!-- For Android -->
+		<link rel="manifest" href="/manifest.json">
+		
+		<!-- For Safari on iOS -->
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<meta name="apple-mobile-web-app-title" content="Weather PWA">
+		<link rel="apple-touch-icon" href="images/icons/icon-152x152.png">
+		
+		<!-- For Windows -->
+		<meta name="msapplication-TileImage" content="images/icons/icon-144x144.png">
+		<meta name="msapplication-TileColor" content="#2F3BA2">
 	</head>
 	<body>
 		
@@ -133,7 +143,11 @@
 					</div>
 				</div>
 			</div>
+			
+			<button id="butPush" class="button" disabled>Enable Push Notification</button>
 		</main>
+		
+		<textarea name="derp" id="subscriptionData" cols="30" rows="10"></textarea>
 		
 		<div class="dialog-container">
 			<div class="dialog">
